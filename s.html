@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang=""en">
+  <head>
+    <meta charset="utf-8">
+    <title>Sample search</title>
+    <link rel="stylesheet" media="screen" href="//unpkg.com/@bitnami/hex/dist/hex.min.css">
+
+    <script type="text/javascript">
+      function RefreshFrame( pFrameId ) {
+        var MyFrame = document.getElementById( pFrameId );
+        var wController = 'http://parts.onlinestocksupply.com/iris-vstock-search-';
+        var wSearchString = document.getElementById( 'SearchBox' ).value;
+        wSearchString = wSearchString.replace(/(\r?\n|\r)+/g,","); //Replaces carriage returns with commas
+        wSearchString = wSearchString.replace(/(^,)|(,$)/g, ""); //Removes leading and trailing commas
+        var wClientNoString = "intrd7906";
+        var wRandom = Math.floor(Math.random()*10000); //Prevent browser caching
+        MyFrame.src = wController + wClientNoString + '-r-en.jsa?Q='+ wSearchString + '&R=' + wRandom;
+     }
+    </script>
+  </head>
+
+  <body>
+    <form method="post" id="Search" action="javascript:RefreshFrame('SearchFrame')">
+      <span>Part Number</span>
+      <textarea id="SearchBox" rows="4" cols="30" name="SearchRequest.QueryCriteria.SingleBox" style="vertical-align: top; margin: 0 5px;"></textarea>
+      <input type="submit" value="Go" />
+    </form>
+  </body>
+
+</html>
