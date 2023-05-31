@@ -2,26 +2,62 @@
 
 require 'rack'
 require 'open-uri'
+require 'nokogiri'
 require_relative 'id'
 
 #  Сlass ProxyServer that implements everything we need
 class ProxyServer
-  W_CONTROLLER = 'http://parts.onlinestocksupply.com/iris-vstock-search-'
+  W_SERVER = 'http://parts.onlinestocksupply.com'
+  W_CONTROLLER = 'iris-vstock-search-'
 
+  # Generate error page
+  # This also covers 200 OK for the root :)
   def error_response(code)
     [code,
      { 'content-type' => 'text/html', 'cache-control' => 'public, max-age=86400' },
      File.open("public/#{code}.html", File::RDONLY)]
   end
 
+  # Output generator
+  # Specification https://efind.ru/services/partnership/online/specs/
+  def generate_output(items)
+    output = ['<data version="2.0">']
+    items.each do |item|
+      output << '  <item>'
+      output << "    <part>#{item['PartNumber']}</part>"
+      output << "    <mfg>#{item['ManufacturerName']}</mfg>" unless item['ManufacturerName'] == '-'
+      output << '  </item>'
+    end
+    output << '</data>'
+  end
+
+  # Parse single document
+  # Table cells like <td class="txtC noRightBord">
+  # And items inside like <input type="hidden" name="Doc.TargetClient[24].Item.PartNumber" value="4-1633930-9"/>
+  def process_document!(items, document)
+    document.xpath('//table/tbody/tr/td[@class="txtC noRightBord"]/input').each do |input|
+      i_match, i_item, i_name = input['name'].match(/Doc.TargetClient\[(.+)\]\.Item\.(.+)/).to_a
+      unless i_match.nil?
+        items[i_item.to_i] = {} if items[i_item.to_i].nil?
+        items[i_item.to_i].store(i_name, input['value'])
+      end
+    end
+  end
+
   def do_search(part_number)
     r = rand(0..10_000)
-    req = "#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
-#    f = URI.parse(req).open
-    f = File.open('sample.txt', 'r')
+    req = "#{W_SERVER}#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
+    f = URI.parse(req).open
+    #f = File.open('sample.txt', 'r')
+    doc = Nokogiri::HTML(f)
+
+    items = []
+    process_document!(items, doc)
+    output = generate_output(items)
+
     [200,
-     { 'content-type' => 'text/html', 'cache-control' => 'public, max-age=86400' },
-     f]
+     { 'content-type' => 'text/plain', 'cache-control' => 'public, max-age=86400' },
+     output ]
   end
 
   #   Process "/search" path
@@ -53,3 +89,10 @@ class ProxyServer
     end
   end
 end
+
+#begin
+#  p = ProxyServer.new
+#  puts p.do_search('123')
+#rescue StandardError => e
+#  raise e
+#end

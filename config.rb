@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The directory to operate out of.
 #
 # The default is the current directory.
@@ -20,7 +22,7 @@
 # The default is "config.ru".
 #
 # rackup '/u/apps/lolcat/config.ru'
-rackup "proxy_server/config.ru"
+rackup 'proxy_server/config.ru'
 
 # Set the environment in which the rack's app will run. The value must be a string.
 #
@@ -74,7 +76,7 @@ threads 0, 8
 # bind 'unix:///var/run/puma.sock'
 # bind 'unix:///var/run/puma.sock?umask=0111'
 # bind 'ssl://127.0.0.1:9292?key=path_to_key&cert=path_to_cert'
-bind "tcp://0.0.0.0:80"
+bind 'tcp://0.0.0.0:80'
 
 # Instead of "bind 'ssl://127.0.0.1:9292?key=path_to_key&cert=path_to_cert'" you
 # can also use the "ssl_bind" option.
@@ -170,7 +172,6 @@ bind "tcp://0.0.0.0:80"
 #
 # raise_exception_on_sigterm true
 
-
 # Additional text to display in process listing
 #
 # tag 'app name'
@@ -218,6 +219,5 @@ bind "tcp://0.0.0.0:80"
 # activate_control_app 'unix:///var/run/pumactl.sock'
 # activate_control_app 'unix:///var/run/pumactl.sock', { auth_token: '12345' }
 # activate_control_app 'unix:///var/run/pumactl.sock', { no_token: true }
-
 
 activate_control_app 'tcp://127.0.0.1:8081', { no_token: true }
