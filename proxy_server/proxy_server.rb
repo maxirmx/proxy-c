@@ -10,6 +10,19 @@ class ProxyServer
   W_SERVER = 'http://parts.onlinestocksupply.com'
   W_CONTROLLER = 'iris-vstock-search-'
 
+  # Если запрашиваемая строка состоит из слов, разделенных пробелом (или символом-разделителем),
+  # в результирующих строках должны присутствовать все запрашиваемые слова.
+  # Символы-разделители: « », «\t» (табуляция), «\n» (перевод строки), «,» «;» «*» «?».
+  # \s - tab, space, newline
+  SPLIT_RE = /[\s,;*?]/.freeze
+
+  # При поиске допускается удаление некоторых спецсимволов: «_», «-», «.», «/», «\», «|», «#», «~», «+»,
+  # «^», «@», «%», «(», «)», «{», «}», «[», «]», «=», «:», «'», «"», «`», «<»,«>», «–» («длинное» тире).
+  REMOVE = '_\-./\\|#~+^@%(){}[]=:\'"`<>–'
+
+  # В результатах поиска должно быть не более 5 строк.
+  MAX_ITEMS = 5
+
   # Generate error page
   # This also covers 200 OK for the root :)
   def error_response(code)
@@ -18,28 +31,32 @@ class ProxyServer
      File.open("public/#{code}.html", File::RDONLY)]
   end
 
-  # Aquash duplicate part numbers
-  def squash_items(items)
+  # Squash duplicate part numbers
+  # Check that part_number contains ALL keywords from the search term
+  # efind.ru wants ALL while brokerforum.com provides ANY
+  def squash_items(items, keywords)
     squashed_items = {}
     items.each do |item|
-      unless squashed_items.key?(item['PartNumber'])
-        squashed_items.store(item['PartNumber'],
-                             item['ManufacturerName'])
+      p_number = item['PartNumber']
+      pp_number = p_number.tr(REMOVE, '')
+      if keywords.all? { |keyword| pp_number.include? keyword } && !squashed_items.key?(p_number)
+        squashed_items.store(p_number, item['ManufacturerName'])
       end
+      break if squashed_items.size >= MAX_ITEMS
     end
     squashed_items
   end
 
   # Output generator
   # Specification https://efind.ru/services/partnership/online/specs/
-  def generate_output(items)
+  def generate_output(items, keywords)
     output = ['<data version="2.0">']
-    squash_items(items).each do |key, value|
-      output << '  <item>'
-      output << "    <part>#{key}</part>"
-      output << "    <mfg>#{value}</mfg>" unless value == '-'
+    squash_items(items, keywords).each do |key, value|
+      output << '<item>'
+      output << "<part>#{key}</part>"
+      output << "<mfg>#{value}</mfg>" unless value == '-'
       output << '<dlv>6-8 недель</dlv>'
-      output << '  </item>'
+      output << '</item>'
     end
     output << '</data>'
   end
@@ -57,6 +74,7 @@ class ProxyServer
     end
   end
 
+  # Do search job
   def do_search(part_number)
     r = rand(0..10_000)
     req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
@@ -66,18 +84,18 @@ class ProxyServer
 
     items = []
     process_document!(items, doc)
-    output = generate_output(items)
+    output = generate_output(items, part_number.split(SPLIT_RE))
 
     [200,
      { 'content-type' => 'text/plain', 'cache-control' => 'public, max-age=86400' },
      output]
   end
 
-  #   Process "/search" path
-  #   expecting two Get request parameters
+  # Process "/search" path
+  # expecting two Get request parameters
   #   "from"    --  "efind"
   #   "search"  --  <P/N to search>
-  #   Return 400.html if request does not match this pattern
+  # Return 400.html if request does not match this pattern
   def search(req)
     if req.params['from'] != 'efind' || !req.params.key?('search')
       error_response(400)
@@ -104,8 +122,8 @@ class ProxyServer
 end
 
 # begin
-#  p = ProxyServer.new
-#  puts p.do_search('123')
+#   p = ProxyServer.new
+#   puts p.do_search('416300')
 # rescue StandardError => e
-#  raise e
+#   raise e
 # end
