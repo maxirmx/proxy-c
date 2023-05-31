@@ -18,14 +18,26 @@ class ProxyServer
      File.open("public/#{code}.html", File::RDONLY)]
   end
 
+  # Aquash duplicate part numbers
+  def squash_items(items)
+    squashed_items = {}
+    items.each do |item|
+      unless squashed_items.key?(item['PartNumber'])
+        squashed_items.store(item['PartNumber'],
+                             item['ManufacturerName'])
+      end
+    end
+    squashed_items
+  end
+
   # Output generator
   # Specification https://efind.ru/services/partnership/online/specs/
   def generate_output(items)
     output = ['<data version="2.0">']
-    items.each do |item|
+    squash_item(items).each do |key, value|
       output << '  <item>'
-      output << "    <part>#{item['PartNumber']}</part>"
-      output << "    <mfg>#{item['ManufacturerName']}</mfg>" unless item['ManufacturerName'] == '-'
+      output << "    <part>#{key}</part>"
+      output << "    <mfg>#{value}</mfg>" unless value == '-'
       output << '  </item>'
     end
     output << '</data>'
@@ -48,7 +60,7 @@ class ProxyServer
     r = rand(0..10_000)
     req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
     f = URI.parse(req).open
-    #f = File.open('sample.txt', 'r')
+    # f = File.open('sample.txt', 'r')
     doc = Nokogiri::HTML(f)
 
     items = []
@@ -57,7 +69,7 @@ class ProxyServer
 
     [200,
      { 'content-type' => 'text/plain', 'cache-control' => 'public, max-age=86400' },
-     output ]
+     output]
   end
 
   #   Process "/search" path
@@ -90,9 +102,9 @@ class ProxyServer
   end
 end
 
-#begin
+# begin
 #  p = ProxyServer.new
 #  puts p.do_search('123')
-#rescue StandardError => e
+# rescue StandardError => e
 #  raise e
-#end
+# end
