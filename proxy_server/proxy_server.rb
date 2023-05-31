@@ -46,7 +46,7 @@ class ProxyServer
 
   def do_search(part_number)
     r = rand(0..10_000)
-    req = "#{W_SERVER}#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
+    req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
     f = URI.parse(req).open
     #f = File.open('sample.txt', 'r')
     doc = Nokogiri::HTML(f)
