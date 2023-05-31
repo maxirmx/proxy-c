@@ -34,10 +34,11 @@ class ProxyServer
   # Specification https://efind.ru/services/partnership/online/specs/
   def generate_output(items)
     output = ['<data version="2.0">']
-    squash_item(items).each do |key, value|
+    squash_items(items).each do |key, value|
       output << '  <item>'
       output << "    <part>#{key}</part>"
       output << "    <mfg>#{value}</mfg>" unless value == '-'
+      output << '<dlv>6-8 недель</dlv>'
       output << '  </item>'
     end
     output << '</data>'
