@@ -3,6 +3,7 @@
 require 'rack'
 require 'open-uri'
 require 'nokogiri'
+require 'tzinfo'
 require_relative 'id'
 
 #  Сlass ProxyServer that implements everything we need
@@ -31,31 +32,36 @@ class ProxyServer
      File.open("public/#{code}.html", File::RDONLY)]
   end
 
-  # Squash duplicate part numbers
+  def response(items)
+    [200,
+     { 'content-type' => 'text/html', 'cache-control' => 'public, max-age=86400' },
+     items]
+  end
+
   # Check that part_number contains ALL keywords from the search term
   # efind.ru wants ALL while brokerforum.com provides ANY
-  def squash_items(items, keywords)
-    squashed_items = {}
+  # Squash duplicate part numbers
+  def squash_items!(squashed_items, items, keywords)
     items.each do |item|
       p_number = item['PartNumber']
-      pp_number = p_number.tr(REMOVE, '')
+      pp_number = p_number.tr(REMOVE, '').downcase
+      #      puts "#{pp_number} -- #{keywords}"
       if keywords.all? { |keyword| pp_number.include? keyword } && !squashed_items.key?(p_number)
         squashed_items.store(p_number, item['ManufacturerName'])
       end
       break if squashed_items.size >= MAX_ITEMS
     end
-    squashed_items
   end
 
   # Output generator
   # Specification https://efind.ru/services/partnership/online/specs/
-  def generate_output(items, keywords)
+  def generate_output(items)
     output = ['<data version="2.0">']
-    squash_items(items, keywords).each do |key, value|
+    items.each do |key, value|
       output << '<item>'
       output << "<part>#{key}</part>"
       output << "<mfg>#{value}</mfg>" unless value == '-'
-      output << '<dlv>6-8 недель</dlv>'
+      output << '<dlv>6-10 недель</dlv><note>Поставка под заказ</note>'
       output << '</item>'
     end
     output << '</data>'
@@ -67,28 +73,44 @@ class ProxyServer
   def process_document!(items, document)
     document.xpath('//table/tbody/tr/td[@class="txtC noRightBord"]/input').each do |input|
       i_match, i_item, i_name = input['name'].match(/Doc.TargetClient\[(.+)\]\.Item\.(.+)/).to_a
-      unless i_match.nil?
-        items[i_item.to_i] = {} if items[i_item.to_i].nil?
-        items[i_item.to_i].store(i_name, input['value'])
-      end
+      next if i_match.nil?
+
+      items[i_item.to_i] = {} if items[i_item.to_i].nil?
+      items[i_item.to_i].store(i_name, input['value'])
+      #        puts "---> #{items[i_item.to_i]}"
+    end
+  end
+
+  def process_extra_documents!(final_items, doc, keywords)
+    doc.xpath('//body/div/div/div/a').each do |page_ref|
+      puts "Processing additional page at #{page_ref['href']} ..."
+      extra_req = "#{W_SERVER}/#{page_ref['href']}"
+      extra_doc = Nokogiri::HTML(URI.parse(extra_req).open)
+      items = []
+      process_document!(items, extra_doc)
+      squash_items!(final_items, items, keywords)
+      break if final_items.size >= MAX_ITEMS
     end
   end
 
   # Do search job
   def do_search(part_number)
-    r = rand(0..10_000)
-    req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{r}"
+    puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
+
+    req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{rand(0..10_000)}"
     f = URI.parse(req).open
     # f = File.open('sample.txt', 'r')
     doc = Nokogiri::HTML(f)
 
     items = []
+    final_items = {}
+    keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
     process_document!(items, doc)
-    output = generate_output(items, part_number.split(SPLIT_RE))
+    squash_items!(final_items, items, keywords)
 
-    [200,
-     { 'content-type' => 'text/plain', 'cache-control' => 'public, max-age=86400' },
-     output]
+    #    process_extra_documents!(final_items, doc, keywords) unless final_items.size >= MAX_ITEMS
+
+    response generate_output(final_items)
   end
 
   # Process "/search" path
@@ -122,8 +144,8 @@ class ProxyServer
 end
 
 # begin
-#   p = ProxyServer.new
-#   puts p.do_search('416300')
+#  p = ProxyServer.new
+#  puts p.do_search('4163')
 # rescue StandardError => e
-#   raise e
+#  raise e
 # end

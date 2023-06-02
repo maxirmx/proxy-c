@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'puma/daemon'
+
 # The directory to operate out of.
 #
 # The default is the current directory.
@@ -36,23 +38,23 @@ rackup 'proxy_server/config.ru'
 # The default is "false".
 #
 # daemonize
-# daemonize false
+daemonize true
 
 # Store the pid of the server in the file at "path".
 #
-# pidfile '/u/apps/lolcat/tmp/pids/puma.pid'
+pidfile '/var/proxy-c/pids/proxy-c.pid'
 
 # Use "path" as the file to store the server info state. This is
 # used by "pumactl" to query and control the server.
 #
-# state_path '/u/apps/lolcat/tmp/pids/puma.state'
+state_path '/var/proxy-c/pids/puma.state'
 
 # Redirect STDOUT and STDERR to files specified. The 3rd parameter
 # ("append") specifies whether the output is appended, the default is
 # "false".
 #
-# stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr'
 # stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr', true
+stdout_redirect '/var/proxy-c/log/stdout', '/var/proxy-c/log/stderr'
 
 # Disable request logging.
 #
