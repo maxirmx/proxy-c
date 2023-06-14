@@ -1,2 +1,2 @@
-# strange-6
-Strange.Humans.6
+# proxy-c
+proxy-c
