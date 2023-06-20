@@ -41,7 +41,7 @@ class ProxyServer
   # Check that part_number contains ALL keywords from the search term
   # efind.ru wants ALL while brokerforum.com provides ANY
   # Squash duplicate part numbers
-  def squash_items!(squashed_items, items, keywords)
+  def squash_items!(squashed_items, items, keywords, unlimited)
     items.each do |item|
       p_number = item['PartNumber']
       pp_number = p_number.tr(REMOVE, '').downcase
@@ -49,7 +49,7 @@ class ProxyServer
       if keywords.all? { |keyword| pp_number.include? keyword } && !squashed_items.key?(p_number)
         squashed_items.store(p_number, item['ManufacturerName'])
       end
-      break if squashed_items.size >= MAX_ITEMS
+      break unless unlimited || squashed_items.size < MAX_ITEMS
     end
   end
 
@@ -81,34 +81,37 @@ class ProxyServer
     end
   end
 
-  def process_extra_documents!(final_items, doc, keywords)
+  def process_extra_documents!(final_items, doc, keywords, unlimited)
     doc.xpath('//body/div/div/div/a').each do |page_ref|
       puts "Processing additional page at #{page_ref['href']} ..."
       extra_req = "#{W_SERVER}/#{page_ref['href']}"
       extra_doc = Nokogiri::HTML(URI.parse(extra_req).open)
       items = []
       process_document!(items, extra_doc)
-      squash_items!(final_items, items, keywords)
-      break if final_items.size >= MAX_ITEMS
+      squash_items!(final_items, items, keywords, unlimited)
+      break unless unlimited || final_items.size < MAX_ITEMS
     end
   end
 
-  # Do search job
-  def do_search(part_number)
-    puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
-
+  def get_document(part_number)
     req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{rand(0..10_000)}"
     f = URI.parse(req).open
     # f = File.open('sample.txt', 'r')
-    doc = Nokogiri::HTML(f)
+    Nokogiri::HTML(f)
+  end
 
+  # Do search job
+  def do_search(part_number, unlimited: false)
+    puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
+
+    doc = get_document(part_number)
     items = []
     final_items = {}
     keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
     process_document!(items, doc)
-    squash_items!(final_items, items, keywords)
+    squash_items!(final_items, items, keywords, unlimited)
 
-    #    process_extra_documents!(final_items, doc, keywords) unless final_items.size >= MAX_ITEMS
+    process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
 
     response generate_output(final_items)
   end
@@ -119,10 +122,15 @@ class ProxyServer
   #   "pn"  --  <P/N to search>
   # Return 400.html if request does not match this pattern
   def search(req)
-    if req.params['from'] != 'efind' || !req.params.key?('pn')
-      error_response(400)
-    else
+    error_response(400) unless req.params.key?('pn')
+
+    case req.params['from']
+    when 'efind'
       do_search(req.params['pn'])
+    when 'intrademanagement'
+      do_search(req.params['pn'], true)
+    else
+      error_response(400)
     end
   end
 
