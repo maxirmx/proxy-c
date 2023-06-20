@@ -61,7 +61,7 @@ class ProxyServer
       output << '<item>'
       output << "<part>#{key}</part>"
       output << "<mfg>#{value}</mfg>" unless value == '-'
-      output << '<dlv>6-10 недель</dlv><note>Поставка под заказ</note>'
+      output << '<dlv>6-10 недель</dlv><note>Под заказ</note>'
       output << '</item>'
     end
     output << '</data>'
@@ -116,13 +116,13 @@ class ProxyServer
   # Process "/search" path
   # expecting two Get request parameters
   #   "from"    --  "efind"
-  #   "search"  --  <P/N to search>
+  #   "pn"  --  <P/N to search>
   # Return 400.html if request does not match this pattern
   def search(req)
-    if req.params['from'] != 'efind' || !req.params.key?('search')
+    if req.params['from'] != 'efind' || !req.params.key?('pn')
       error_response(400)
     else
-      do_search(req.params['search'])
+      do_search(req.params['pn'])
     end
   end
 
