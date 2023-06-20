@@ -143,6 +143,8 @@ class ProxyServer
     case req.path_info
     when '/search'
       search(req)
+    when '/show'
+      search(req)
     when '/'
       error_response(200)
     else
