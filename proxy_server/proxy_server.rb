@@ -89,7 +89,7 @@ class ProxyServer
 
   def process_extra_documents!(final_items, doc, keywords, unlimited)
     doc.xpath('//body/div/div/div/a').each do |page_ref|
-    # puts "Processing additional page at #{page_ref['href']} ..."
+      # puts "Processing additional page at #{page_ref['href']} ..."
       extra_req = "#{W_SERVER}/#{page_ref['href']}"
       extra_doc = Nokogiri::HTML(URI.parse(extra_req).open)
       items = []
@@ -121,7 +121,7 @@ class ProxyServer
 
   # Do search job
   def do_search(part_number, unlimited)
-  # puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
+    # puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
 
     if part_number.force_encoding('UTF-8').ascii_only?
       do_search_inner(part_number, unlimited)
