@@ -52,7 +52,6 @@ class ProxyServer
     items.each do |item|
       p_number = item['PartNumber']
       pp_number = p_number.tr(REMOVE, '').downcase
-      #      puts "#{pp_number} -- #{keywords}"
       if keywords.all? { |keyword| pp_number.include? keyword } && !squashed_items.key?(p_number)
         squashed_items.store(p_number, item['ManufacturerName'])
       end
