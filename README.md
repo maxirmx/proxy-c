@@ -17,4 +17,4 @@ W_CLIENT_ID = '<your brokerforum id>'
 * create ```/var/proxy-c/logs``` folder, make it writable for proxy-c uid
 
 ### run
-* [will use port 80] puma -C config.rb  
+* [will use port 80] puma -C config.rb

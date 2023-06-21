@@ -7,6 +7,7 @@ require 'tzinfo'
 require_relative 'id'
 
 #  Сlass ProxyServer that implements everything we need
+# rubocop:disable Metrics/ClassLength
 class ProxyServer
   W_SERVER = 'http://parts.onlinestocksupply.com'
   W_CONTROLLER = 'iris-vstock-search-'
@@ -34,8 +35,14 @@ class ProxyServer
 
   def response(items)
     [200,
-     { 'content-type' => 'text/html', 'cache-control' => 'public, max-age=86400' },
+     { 'content-type' => 'text/xml', 'cache-control' => 'public, max-age=86400' },
      items]
+  end
+
+  def empty_response
+    [200,
+     { 'content-type' => 'text/xml', 'cache-control' => 'public, max-age=86400' },
+     File.open('public/empty.xml', File::RDONLY)]
   end
 
   # Check that part_number contains ALL keywords from the search term
@@ -96,14 +103,11 @@ class ProxyServer
   def get_document(part_number)
     req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{rand(0..10_000)}"
     f = URI.parse(req).open
-    # f = File.open('sample.txt', 'r')
+    # f = File.open('sample/sample.txt', 'r')
     Nokogiri::HTML(f)
   end
 
-  # Do search job
-  def do_search(part_number, unlimited = false)
-    puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
-
+  def do_search_inner(part_number, unlimited)
     doc = get_document(part_number)
     items = []
     final_items = {}
@@ -116,6 +120,17 @@ class ProxyServer
     response generate_output(final_items)
   end
 
+  # Do search job
+  def do_search(part_number, unlimited)
+    puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
+
+    if part_number.force_encoding('UTF-8').ascii_only?
+      do_search_inner(part_number, unlimited)
+    else
+      empty_response
+    end
+  end
+
   # Process "/search" path
   # expecting two Get request parameters
   #   "from"    --  "efind"
@@ -126,7 +141,7 @@ class ProxyServer
 
     case req.params['from']
     when 'efind'
-      do_search(req.params['pn'])
+      do_search(req.params['pn'], false)
     when 'intrademanagement'
       do_search(req.params['pn'], true)
     else
@@ -136,14 +151,12 @@ class ProxyServer
 
   #   Request handler
   #   Serve "/search" path with search method
-  #   Return index.html on requests to root
+  #   Return 200.html on requests to root
   #   Return 404.html for all other paths
   def call(env)
     req = Rack::Request.new(env)
     case req.path_info
     when '/search'
-      search(req)
-    when '/show'
       search(req)
     when '/'
       error_response(200)
@@ -152,10 +165,13 @@ class ProxyServer
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
 
 # begin
 #  p = ProxyServer.new
-#  puts p.do_search('4163')
+#  search = String.new
+#  search << '4163 АБВ'
+#  puts p.do_search(search, false)
 # rescue StandardError => e
 #  raise e
 # end
