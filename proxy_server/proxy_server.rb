@@ -4,6 +4,14 @@ require 'rack'
 require 'open-uri'
 require 'nokogiri'
 require 'tzinfo'
+require 'connection_pool'
+begin
+  with_redis = true
+  require 'redis'
+rescue LoadError
+  with_redis = false
+end
+
 require_relative 'id'
 
 #  Сlass ProxyServer that implements everything we need
@@ -99,10 +107,9 @@ class ProxyServer
     end
   end
 
-  def get_document(part_number)
-    req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{rand(0..10_000)}"
-    f = URI.parse(req).open
-    # f = File.open('sample/sample.txt', 'r')
+  def get_document(_part_number)
+    # f = URI.parse(req).open
+    f = File.open('sample/sample.txt', 'r')
     Nokogiri::HTML(f)
   end
 
@@ -166,11 +173,11 @@ class ProxyServer
 end
 # rubocop:enable Metrics/ClassLength
 
-# begin
-#  p = ProxyServer.new
-#  search = String.new
-#  search << '4163 АБВ'
-#  puts p.do_search(search, false)
-# rescue StandardError => e
-#  raise e
-# end
+begin
+  p = ProxyServer.new
+  search = String.new
+  search << '4163 АБВ'
+  puts p.do_search(search, false)
+rescue StandardError => e
+  raise e
+end
