@@ -115,8 +115,8 @@ module Proxy
     end
 
     def get_document(_part_number)
-      # f = URI.parse(req).open
-      f = File.open('sample/sample.txt', 'r')
+      f = URI.parse(req).open
+      # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
     end
 
@@ -191,11 +191,11 @@ module Proxy
   # rubocop:enable Metrics/ClassLength
 end
 
-begin
-  p = Proxy::ProxyServer.new
-  search = String.new
-  search << '4163 АБВ'
-  puts p.do_search(search, false)
-rescue StandardError => e
-  raise e
-end
+# begin
+#  p = Proxy::ProxyServer.new
+#  search = String.new
+#  search << '4163 АБВ'
+#  puts p.do_search(search, false)
+# rescue StandardError => e
+#  raise e
+# end
