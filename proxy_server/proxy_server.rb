@@ -61,7 +61,7 @@ class ProxyServer
       output << '<item>'
       output << "<part>#{key}</part>"
       output << "<mfg>#{value}</mfg>" unless value == '-'
-      output << '<dlv>6-10 недель</dlv><note>Под заказ</note>'
+      output << '<dlv>4-6 недель</dlv><note>Под заказ</note>'
       output << '</item>'
     end
     output << '</data>'
@@ -101,7 +101,7 @@ class ProxyServer
   end
 
   # Do search job
-  def do_search(part_number, unlimited: false)
+  def do_search(part_number, unlimited = false)
     puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
 
     doc = get_document(part_number)
