@@ -6,6 +6,7 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
 # gem "rails"
 
+gem 'connection_pool', '~> 2.4'
 gem 'nokogiri', '~> 1.15'
 gem 'open-uri', '~> 0.3.0'
 gem 'puma', '~> 6.2'

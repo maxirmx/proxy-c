@@ -5,4 +5,4 @@ require_relative './proxy_server'
 # Cache items placed in the following folders
 use Rack::Static, urls: ['/css'], root: 'public'
 
-run ProxyServer.new
+run Proxy::ProxyServer.new
