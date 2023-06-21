@@ -136,6 +136,7 @@ module Proxy
     end
 
     def do_search_inner(part_number, unlimited)
+      rsp = nil
       rsp = Proxy.redis.get part_number unless Proxy.redis.nil? || unlimited
       if rsp.nil?
         rsp = do_search_inner_inner(part_number, unlimited)
@@ -143,7 +144,10 @@ module Proxy
           Proxy.redis.set part_number, rsp
           Proxy.redis.expire part_number, 60 * 60 * 24
         end
+      else 
+       rsp = JSON.parse(rsp)
       end
+
       response rsp
     end
 
