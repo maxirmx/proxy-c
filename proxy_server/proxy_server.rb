@@ -132,21 +132,19 @@ module Proxy
 
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
 
-      response generate_output(final_items)
+      generate_output(final_items)
     end
 
     def do_search_inner(part_number, unlimited)
-      r = Proxy::redis.get part_number unless Proxy::redis.nil? || unlimited
-      if true
-      response = do_search_inner_inner(part_number, unlimited)
-      unless Proxy::redis.nil? || unlimited
-        Proxy::redis.set part_number, response
-        Proxy::redis.expire part_number, 60 * 60 * 24
+      rsp = Proxy.redis.get part_number unless Proxy.redis.nil? || unlimited
+      if rsp.nil?
+        rsp = do_search_inner_inner(part_number, unlimited)
+        unless Proxy.redis.nil? || unlimited
+          Proxy.redis.set part_number, rsp
+          Proxy.redis.expire part_number, 60 * 60 * 24
+        end
       end
-      else
-      response = JSON.parse(r)
-      end
-      response
+      response rsp
     end
 
     # Do search job
