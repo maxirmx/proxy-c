@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'json'
 require 'rack'
 require 'open-uri'
 require 'nokogiri'
@@ -114,7 +115,8 @@ module Proxy
       end
     end
 
-    def get_document(_part_number)
+    def get_document(part_number)
+      req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{rand(0..10_000)}"
       f = URI.parse(req).open
       # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
@@ -134,11 +136,15 @@ module Proxy
     end
 
     def do_search_inner(part_number, unlimited)
-      response = redis.get part_number unless redis.nil? || unlimited
-      response = do_search_inner_inner(part_number, unlimited) if response.nil?
-      unless redis.nil? || unlimited
-        redis.set part_number, response
-        redis.expire part_number, 60 * 60 * 24
+      r = Proxy::redis.get part_number unless Proxy::redis.nil? || unlimited
+      if true
+      response = do_search_inner_inner(part_number, unlimited)
+      unless Proxy::redis.nil? || unlimited
+        Proxy::redis.set part_number, response
+        Proxy::redis.expire part_number, 60 * 60 * 24
+      end
+      else
+      response = JSON.parse(r)
       end
       response
     end
