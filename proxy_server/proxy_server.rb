@@ -197,9 +197,9 @@ module Proxy
       else
         error_response(req.path_info == '/' ? 200 : 400)
       end
-    # rescue StandardError
-    #  empty_response
-    # end
+      # rescue StandardError
+      # empty_response
+    end
   end
   # rubocop:enable Metrics/ClassLength
 end
