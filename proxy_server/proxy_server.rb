@@ -158,7 +158,7 @@ module Proxy
 
     # Do search job
     def do_search(part_number, unlimited)
-      puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
+      # puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
 
       if part_number.force_encoding('UTF-8').ascii_only?
         do_search_inner(part_number, unlimited)
@@ -197,9 +197,9 @@ module Proxy
       else
         error_response(req.path_info == '/' ? 200 : 400)
       end
-    rescue StandardError
-      empty_response
-    end
+    # rescue StandardError
+    #  empty_response
+    # end
   end
   # rubocop:enable Metrics/ClassLength
 end
