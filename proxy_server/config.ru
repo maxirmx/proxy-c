@@ -2,7 +2,7 @@
 
 require_relative './proxy_server'
 
-logger = Logger.new('log/proxy-c.log', shift_age: 'weekly')
+logger = Logger.new('log/proxy-c.log', 'weekly')
 use Rack::CommonLogger, logger
 
 # Cache items placed in the following folders
