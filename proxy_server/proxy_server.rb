@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'cgi'
 require 'json'
 require 'rack'
 require 'open-uri'
@@ -105,33 +106,36 @@ module Proxy
 
     def process_extra_documents!(final_items, doc, keywords, unlimited)
       doc.xpath('//body/div/div/div/a').each do |page_ref|
-        # puts "Processing additional page at #{page_ref['href']} ..."
-        extra_req = "#{W_SERVER}/#{page_ref['href']}"
-        extra_doc = Nokogiri::HTML(URI.parse(extra_req).open)
-        items = []
-        process_document!(items, extra_doc)
-        squash_items!(final_items, items, keywords, unlimited)
+        href = page_ref['href']
+#        puts "Processing additional page at #{page_ref} ..."
+        unless href.nil? || href.empty?
+          extra_req = "#{W_SERVER}/#{href}"
+#          puts "extra_req  #{extra_req}" 
+          extra_doc = Nokogiri::HTML(URI.parse(extra_req).open)
+          items = []
+          process_document!(items, extra_doc)
+          squash_items!(final_items, items, keywords, unlimited)
+        end
         break unless unlimited || final_items.size < MAX_ITEMS
       end
     end
 
     def get_document(part_number)
-      req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{part_number}&R=#{rand(0..10_000)}"
+      req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{CGI.escape(part_number)}&R=#{rand(0..10_000)}"
       f = URI.parse(req).open
       # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
     end
 
     def do_search_inner_inner(part_number, unlimited)
+#      pn = part_number.tr(REMOVE, ' ')
       doc = get_document(part_number)
       items = []
       final_items = {}
       keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
       process_document!(items, doc)
       squash_items!(final_items, items, keywords, unlimited)
-
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
-
       generate_output(final_items)
     end
 
@@ -142,7 +146,7 @@ module Proxy
         rsp = do_search_inner_inner(part_number, unlimited)
         unless Proxy.redis.nil? || unlimited
           Proxy.redis.set part_number, rsp
-          Proxy.redis.expire part_number, 60 * 60 * 24
+          Proxy.redis.expire part_number, 60 * 60 * 24 * 7
         end
       else 
        rsp = JSON.parse(rsp)
@@ -153,7 +157,7 @@ module Proxy
 
     # Do search job
     def do_search(part_number, unlimited)
-      # puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
+      puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
 
       if part_number.force_encoding('UTF-8').ascii_only?
         do_search_inner(part_number, unlimited)
@@ -186,6 +190,7 @@ module Proxy
     #   Return 404.html for all other paths
     def call(env)
       req = Rack::Request.new(env)
+
       case req.path_info
       when '/search'
         search(req)
