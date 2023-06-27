@@ -173,15 +173,11 @@ module Proxy
     #   "pn"  --  <P/N to search>
     # Return 400.html if request does not match this pattern
     def search(req)
-      if req.params.key?('pn')
-        case req.params['from']
-        when 'efind'
-          do_search(req.params['pn'], false)
-        when 'intrademanagement'
-          do_search(req.params['pn'], true)
-        else
-          error_response(400)
-        end
+      case req.params['from']
+      when 'efind'
+        do_search(req.params['pn'], false)
+      when 'intrademanagement'
+        do_search(req.params['pn'], true)
       else
         error_response(400)
       end
@@ -194,7 +190,7 @@ module Proxy
     def call(env)
       req = Rack::Request.new(env)
 
-      if req.path_info == '/search'
+      if req.path_info == '/search' && req.params.key?('pn')
         search(req)
       else
         error_response(req.path_info == '/' ? 200 : 400)
