@@ -107,11 +107,11 @@ module Proxy
     def process_extra_documents!(final_items, doc, keywords, unlimited)
       doc.xpath('//body/div/div/div/a').each do |page_ref|
         href = page_ref['href']
-#        puts "Processing additional page at #{page_ref} ..."
+        # puts "Processing additional page at #{page_ref} ..."
         unless href.nil? || href.empty?
-          extra_req = "#{W_SERVER}/#{href}"
-#          puts "extra_req  #{extra_req}" 
-          extra_doc = Nokogiri::HTML(URI.parse(extra_req).open)
+          # extra_req = "#{W_SERVER}/#{href}"
+          # puts "extra_req  #{extra_req}"
+          extra_doc = Nokogiri::HTML(URI.parse("#{W_SERVER}/#{href}").open)
           items = []
           process_document!(items, extra_doc)
           squash_items!(final_items, items, keywords, unlimited)
@@ -128,7 +128,7 @@ module Proxy
     end
 
     def do_search_inner_inner(part_number, unlimited)
-#      pn = part_number.tr(REMOVE, ' ')
+      # pn = part_number.tr(REMOVE, ' ')
       doc = get_document(part_number)
       items = []
       final_items = {}
@@ -139,17 +139,18 @@ module Proxy
       generate_output(final_items)
     end
 
+    def save_response(part_number, rsp)
+      Proxy.redis.set part_number, rsp
+      Proxy.redis.expire part_number, 60 * 60 * 24 * 7
+    end
+
     def do_search_inner(part_number, unlimited)
-      rsp = nil
-      rsp = Proxy.redis.get part_number unless Proxy.redis.nil? || unlimited
+      rsp = Proxy.redis.nil? || unlimited ? nil : Proxy.redis.get(part_number)
       if rsp.nil?
         rsp = do_search_inner_inner(part_number, unlimited)
-        unless Proxy.redis.nil? || unlimited
-          Proxy.redis.set part_number, rsp
-          Proxy.redis.expire part_number, 60 * 60 * 24 * 7
-        end
-      else 
-       rsp = JSON.parse(rsp)
+        save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
+      else
+        rsp = JSON.parse(rsp)
       end
 
       response rsp
@@ -191,14 +192,13 @@ module Proxy
     def call(env)
       req = Rack::Request.new(env)
 
-      case req.path_info
-      when '/search'
+      if req.path_info == '/search'
         search(req)
-      when '/'
-        error_response(200)
       else
-        error_response(404)
+        error_response(req.path_info == '/' ? 200 : 400)
       end
+    rescue StandardError
+      empty_response
     end
   end
   # rubocop:enable Metrics/ClassLength
