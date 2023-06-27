@@ -173,13 +173,15 @@ module Proxy
     #   "pn"  --  <P/N to search>
     # Return 400.html if request does not match this pattern
     def search(req)
-      error_response(400) unless req.params.key?('pn')
-
-      case req.params['from']
-      when 'efind'
-        do_search(req.params['pn'], false)
-      when 'intrademanagement'
-        do_search(req.params['pn'], true)
+      if req.params.key?('pn')
+        case req.params['from']
+        when 'efind'
+          do_search(req.params['pn'], false)
+        when 'intrademanagement'
+          do_search(req.params['pn'], true)
+        else
+          error_response(400)
+        end
       else
         error_response(400)
       end
