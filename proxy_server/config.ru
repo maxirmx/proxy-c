@@ -3,9 +3,21 @@
 require_relative './proxy_server'
 
 logger = Logger.new('log/proxy-c.log', 'weekly')
-use Rack::CommonLogger, logger
 
-# Cache items placed in the following folders
+class WLoggerMiddleware
+  def initialize(app, logger)
+    @app = app
+    @logger = logger
+  end
+
+  def call(env)
+    env['logger'] = @logger
+    @app.call(env)
+  end
+end
+
 use Rack::Static, urls: ['/css'], root: 'public'
+use Rack::CommonLogger, logger
+use WLoggerMiddleware, logger
 
 run Proxy::ProxyServer.new
