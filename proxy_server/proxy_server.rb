@@ -70,7 +70,7 @@ module Proxy
     def squash_items!(squashed_items, items, keywords, unlimited)
       items.each do |item|
         p_number = item['PartNumber']
-        pp_number = p_number.tr(REMOVE, '').downcase
+        pp_number = p_number.tr(REMOVE, '')
         if keywords.all? { |keyword| pp_number.include? keyword } && !squashed_items.key?(p_number)
           squashed_items.store(p_number, item['ManufacturerName'])
         end
@@ -125,6 +125,9 @@ module Proxy
     def get_document(part_number)
       req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{CGI.escape(part_number)}&R=#{rand(0..10_000)}"
       f = URI.parse(req).open
+      if part_number.upcase == 'CR2450W'
+        puts "PN '#{part_number}': #{f}"
+      end
       # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
     end
@@ -134,12 +137,14 @@ module Proxy
       doc = get_document(part_number)
       items = []
       final_items = {}
-      keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
+      keywords = part_number.split(SPLIT_RE).map! { |keyword| keyword.tr(REMOVE, '') }
       process_document!(items, doc)
 
       squash_items!(final_items, items, keywords, unlimited)
       logger << "PN '#{part_number}': found #{items.size} items ... filtered to: #{final_items.size}\n"
-      logger << "PN '#{part_number}': found #{items}; keywords: #{keywords}"
+      if part_number.upcase == 'CR2450W'
+        puts "PN '#{part_number}': found #{items}; keywords: #{keywords}"
+      end
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
       generate_output(final_items)
     end
@@ -180,9 +185,9 @@ module Proxy
     def search(req, logger)
       case req.params['from']
       when 'efind'
-        do_search(req.params['pn'], logger, false)
+        do_search(req.params['pn'].upcase, logger, false)
       when 'intrademanagement'
-        do_search(req.params['pn'], logger, true)
+        do_search(req.params['pn'].upcase, logger, true)
       else
         error_response(400)
       end
