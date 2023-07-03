@@ -127,14 +127,16 @@ module Proxy
       Nokogiri::HTML(f)
     end
 
-    def do_search_inner_inner(part_number, unlimited)
+    def do_search_inner_inner(part_number, logger, unlimited)
       # pn = part_number.tr(REMOVE, ' ')
       doc = get_document(part_number)
       items = []
       final_items = {}
       keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
       process_document!(items, doc)
+      logger.write "PN '#{part_number}' items: #{items}"
       squash_items!(final_items, items, keywords, unlimited)
+      logger.write "PN '#{part_number}' final items: #{final_items}"
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
       generate_output(final_items)
     end
@@ -144,12 +146,13 @@ module Proxy
       Proxy.redis.expire part_number, 60 * 60 * 24 * 7
     end
 
-    def do_search_inner(part_number, unlimited)
+    def do_search_inner(part_number, logger, unlimited)
       rsp = Proxy.redis.nil? || unlimited ? nil : Proxy.redis.get(part_number)
       if rsp.nil?
-        rsp = do_search_inner_inner(part_number, unlimited)
+        rsp = do_search_inner_inner(part_number, logger, unlimited)
         save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
       else
+        logger.write "PN '#{part_number}': served from cache"
         rsp = JSON.parse(rsp)
       end
 
@@ -157,12 +160,11 @@ module Proxy
     end
 
     # Do search job
-    def do_search(part_number, unlimited)
-      # puts "#{TZInfo::Timezone.get('Europe/Moscow').now} requesting #{part_number}"
-
+    def do_search(part_number, logger, unlimited)
       if part_number.force_encoding('UTF-8').ascii_only?
-        do_search_inner(part_number, unlimited)
+        do_search_inner(part_number, logger, unlimited)
       else
+        logger.write "PN '#{part_number}': empty response cecause of non ascii symbols"
         empty_response
       end
     end
@@ -172,12 +174,12 @@ module Proxy
     #   "from"    --  "efind"
     #   "pn"  --  <P/N to search>
     # Return 400.html if request does not match this pattern
-    def search(req)
+    def search(req, logger)
       case req.params['from']
       when 'efind'
-        do_search(req.params['pn'], false)
+        do_search(req.params['pn'], logger, false)
       when 'intrademanagement'
-        do_search(req.params['pn'], true)
+        do_search(req.params['pn'], logger, true)
       else
         error_response(400)
       end
@@ -191,7 +193,7 @@ module Proxy
       req = Rack::Request.new(env)
 
       if req.path_info == '/search' && req.params.key?('pn')
-        search(req)
+        search(req, env['logger'])
       else
         error_response(req.path_info == '/' ? 200 : 400)
       end

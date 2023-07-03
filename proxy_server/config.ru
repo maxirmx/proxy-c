@@ -4,6 +4,7 @@ require_relative './proxy_server'
 
 logger = Logger.new('log/proxy-c.log', 'weekly')
 
+# Middleware to share common log
 class WLoggerMiddleware
   def initialize(app, logger)
     @app = app
