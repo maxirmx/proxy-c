@@ -134,9 +134,9 @@ module Proxy
       final_items = {}
       keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
       process_document!(items, doc)
-      logger.write "PN '#{part_number}' items: #{items}"
+#      logger.write "PN '#{part_number}' items: #{items}"
       squash_items!(final_items, items, keywords, unlimited)
-      logger.write "PN '#{part_number}' final items: #{final_items}"
+#      logger.write "PN '#{part_number}' final items: #{final_items}"
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
       generate_output(final_items)
     end
@@ -152,7 +152,7 @@ module Proxy
         rsp = do_search_inner_inner(part_number, logger, unlimited)
         save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
       else
-        logger.write "PN '#{part_number}': served from cache"
+#        logger.write "PN '#{part_number}': served from cache"
         rsp = JSON.parse(rsp)
       end
 
@@ -164,7 +164,7 @@ module Proxy
       if part_number.force_encoding('UTF-8').ascii_only?
         do_search_inner(part_number, logger, unlimited)
       else
-        logger.write "PN '#{part_number}': empty response cecause of non ascii symbols"
+#        logger.write "PN '#{part_number}': empty response cecause of non ascii symbols"
         empty_response
       end
     end
