@@ -136,9 +136,9 @@ module Proxy
       final_items = {}
       keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
       process_document!(items, doc)
-      logger << "PN '#{part_number}' items: #{items}\n"
+
       squash_items!(final_items, items, keywords, unlimited)
-      logger << "PN '#{part_number}' final items: #{final_items}\n"
+      logger << "PN '#{part_number}': found #{items.size} items ... filtered to: #{final_items.size}\n"
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
       generate_output(final_items)
     end
