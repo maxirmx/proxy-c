@@ -154,7 +154,7 @@ module Proxy
         rsp = do_search_inner_inner(part_number, logger, unlimited)
         save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
       else
-        logger.write "PN '#{part_number}': served from cache\n"
+        logger << "PN '#{part_number}': served from cache\n"
         rsp = JSON.parse(rsp)
       end
 
