@@ -139,6 +139,7 @@ module Proxy
 
       squash_items!(final_items, items, keywords, unlimited)
       logger << "PN '#{part_number}': found #{items.size} items ... filtered to: #{final_items.size}\n"
+      logger << "PN '#{part_number}': found #{items}; keywords: #{keywords}"
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
       generate_output(final_items)
     end
