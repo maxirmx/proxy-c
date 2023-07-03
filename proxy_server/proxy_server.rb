@@ -125,9 +125,6 @@ module Proxy
     def get_document(part_number)
       req = "#{W_SERVER}/#{W_CONTROLLER}#{W_CLIENT_ID}-r-en.jsa?Q=#{CGI.escape(part_number)}&R=#{rand(0..10_000)}"
       f = URI.parse(req).open
-      if part_number.upcase == 'CR2450W'
-        puts "PN '#{part_number}': #{f}"
-      end
       # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
     end
@@ -142,9 +139,6 @@ module Proxy
 
       squash_items!(final_items, items, keywords, unlimited)
       logger << "PN '#{part_number}': found #{items.size} items ... filtered to: #{final_items.size}\n"
-      if part_number.upcase == 'CR2450W'
-        puts "PN '#{part_number}': found #{items}; keywords: #{keywords}"
-      end
       process_extra_documents!(final_items, doc, keywords, unlimited) if unlimited || final_items.size < MAX_ITEMS
       generate_output(final_items)
     end
