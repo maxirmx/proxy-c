@@ -68,7 +68,6 @@ module Proxy
 
     def get_document(part_number)
       req = "#{W_SERVER}/#{W_CONTROLLER}?originalFullPartNumber=#{CGI.escape(part_number)}"
-      puts req
       f = URI.parse(req).open
       # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
@@ -79,7 +78,7 @@ module Proxy
       items = {}
       keywords = part_number.split(SPLIT_RE).map!(&:downcase).map! { |keyword| keyword.tr(REMOVE, '') }
       process_document!(items, doc, keywords, unlimited)
-      process_extra_documents!(items, doc, keywords, unlimited)
+      process_extra_documents!(items, doc, keywords, unlimited) if unlimited || items.size < MAX_ITEMS
       logger << "PN '#{part_number}': found #{items.size} items\n"
       generate_output(items)
     end
