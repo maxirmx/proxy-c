@@ -25,8 +25,8 @@ module Proxy
 
   #  Сlass ProxyBase
   class ProxyBase
-    W_SERVER = 'http://parts.onlinestocksupply.com'
-    W_CONTROLLER = 'iris-vstock-search-'
+    W_SERVER = ''
+    W_CONTROLLER = ''
 
     # Если запрашиваемая строка состоит из слов, разделенных пробелом (или символом-разделителем),
     # в результирующих строках должны присутствовать все запрашиваемые слова.

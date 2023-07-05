@@ -19,6 +19,8 @@ require_relative 'proxy_base'
 module Proxy
   #  Сlass ProxyServer that implements everything we need
   class ProxyServerEx < ProxyBase
+    W_SERVER = 'https://www.brokerforum.com'
+    W_CONTROLLER = 'electronic-components-search-en.jsa'
     # Check that part_number contains ALL keywords from the search term
     # efind.ru wants ALL while brokerforum.com provides ANY
     # Squash duplicate part numbers
@@ -66,6 +68,7 @@ module Proxy
 
     def get_document(part_number)
       req = "#{W_SERVER}/#{W_CONTROLLER}?originalFullPartNumber=#{CGI.escape(part_number)}"
+      puts req
       f = URI.parse(req).open
       # f = File.open('sample/sample.txt', 'r')
       Nokogiri::HTML(f)
@@ -114,7 +117,7 @@ end
 # begin
 #  p = Proxy::ProxyServerEx.new
 #  search = String.new
-#  search << 'abcdef'
+#  search << 'max232'
 #  logger = Logger.new('log/proxy-c.log', 'weekly')
 #  puts p.do_search(search, logger, false)
 # rescue StandardError => e

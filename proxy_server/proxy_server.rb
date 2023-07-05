@@ -20,6 +20,9 @@ require_relative 'proxy_base'
 module Proxy
   #  Сlass ProxyServer that implements everything we need
   class ProxyServer < ProxyBase
+    W_SERVER = 'http://parts.onlinestocksupply.com'
+    W_CONTROLLER = 'iris-vstock-search-'
+
     # Check that part_number contains ALL keywords from the search term
     # efind.ru wants ALL while brokerforum.com provides ANY
     # Squash duplicate part numbers
