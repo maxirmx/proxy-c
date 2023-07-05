@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './proxy_server'
+require_relative './proxy_server_ex'
 
 logger = Logger.new('log/proxy-c.log', 'weekly')
 
@@ -21,4 +22,4 @@ use Rack::Static, urls: ['/css'], root: 'public'
 use Rack::CommonLogger, logger
 use WLoggerMiddleware, logger
 
-run Proxy::ProxyServer.new
+run Proxy::ProxyServerEx.new

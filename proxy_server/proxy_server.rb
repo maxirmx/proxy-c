@@ -28,7 +28,7 @@ module Proxy
   #  Сlass ProxyServer that implements everything we need
   # rubocop:disable Metrics/ClassLength
   class ProxyServer
-    W_SERVER = 'http://parts.onlinestocksupply.com'
+    W_SERVER = '  '
     W_CONTROLLER = 'iris-vstock-search-'
 
     # Если запрашиваемая строка состоит из слов, разделенных пробелом (или символом-разделителем),
