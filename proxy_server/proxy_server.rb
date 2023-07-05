@@ -97,7 +97,7 @@ module Proxy
       rsp = Proxy.redis.nil? || unlimited ? nil : Proxy.redis.get(part_number)
       if rsp.nil?
         rsp = do_search_inner_inner(part_number, logger, unlimited)
-      #  save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
+        save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
       else
         rsp = JSON.parse(rsp)
         logger << "PN '#{part_number}': #{(rsp.size - 2) / 5} items served from cache\n"
