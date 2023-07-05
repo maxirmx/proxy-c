@@ -22,4 +22,8 @@ use Rack::Static, urls: ['/css'], root: 'public'
 use Rack::CommonLogger, logger
 use WLoggerMiddleware, logger
 
-run Proxy::ProxyServerEx.new
+if rand(0..10_000) > 9_000
+  run Proxy::ProxyServerEx.new
+else
+  run Proxy::ProxyServer.new
+end
