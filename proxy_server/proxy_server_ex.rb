@@ -85,7 +85,7 @@ module Proxy
 
     def save_response(part_number, rsp)
       Proxy.redis.set part_number, rsp
-      Proxy.redis.expire part_number, 60 * 60 * 24 * 7
+      Proxy.redis.expire part_number, 60 * 60 * 24 * 21
     end
 
     def do_search_inner(part_number, logger, unlimited)
