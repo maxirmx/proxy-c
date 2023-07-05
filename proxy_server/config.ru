@@ -22,4 +22,4 @@ use Rack::Static, urls: ['/css'], root: 'public'
 use Rack::CommonLogger, logger
 use WLoggerMiddleware, logger
 
-run Proxy::ProxyServerEx.new
+run Proxy::ProxyServer.new

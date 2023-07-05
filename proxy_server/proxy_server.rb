@@ -28,7 +28,7 @@ module Proxy
   #  Сlass ProxyServer that implements everything we need
   # rubocop:disable Metrics/ClassLength
   class ProxyServer
-    W_SERVER = '  '
+    W_SERVER = 'http://parts.onlinestocksupply.com'
     W_CONTROLLER = 'iris-vstock-search-'
 
     # Если запрашиваемая строка состоит из слов, разделенных пробелом (или символом-разделителем),
@@ -85,7 +85,7 @@ module Proxy
       items.each do |key, value|
         output << '<item>'
         output << "<part>#{key}</part>"
-        output << "<mfg>#{value}</mfg>" unless value == '-'
+        output << "<mfg>#{value == '-' ? '' : value}</mfg>"
         output << '<dlv>4-6 недель</dlv><note>Под заказ</note>'
         output << '</item>'
       end
@@ -154,8 +154,8 @@ module Proxy
         rsp = do_search_inner_inner(part_number, logger, unlimited)
         save_response(part_number, rsp) unless Proxy.redis.nil? || unlimited
       else
-        logger << "PN '#{part_number}': served from cache\n"
         rsp = JSON.parse(rsp)
+        logger << "PN '#{part_number}': #{(rsp.size - 2)/5} items served from cache\n"
       end
 
       response rsp
