@@ -1,6 +1,7 @@
 [Unit]
 Description=Proxy-c service
-After=network.target
+After=redis-server.service
+Requires=redis-server.service
 
 [Service]
 User=root
