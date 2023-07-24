@@ -9,7 +9,7 @@
 ```
 # frozen_string_literal: true
 
-W_CLIENT_ID = '<your brokerforum id>'
+W_CLIENT_ID = '<your b forum id>'
 ```
 
 ### setup environment
