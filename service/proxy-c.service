@@ -10,11 +10,11 @@ Group=root
 Type=simple
 PIDFile=/var/proxy-c/pids/proxy-c.pid
 WorkingDirectory=/opt/proxy-c
-ExecStart=puma -C config.rb
+ExecStart=/usr/local/bin/puma -C /opt/proxy-c/config.rb
 
 Restart=always
 PrivateTmp=true
-TimeoutStopSec=60s
+TimeoutStopSec=60sc
 TimeoutStartSec=2s
 StartLimitInterval=120s
 StartLimitBurst=5
