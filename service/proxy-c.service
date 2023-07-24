@@ -7,17 +7,17 @@ Requires=redis-server.service
 User=root
 Group=root
 
-Type=simple
+Type=forking
+
+# If your Puma process locks up, systemd's watchdog will restart it within seconds.
+WatchdogSec=10
+
 PIDFile=/var/proxy-c/pids/proxy-c.pid
 WorkingDirectory=/opt/proxy-c
 ExecStart=/usr/local/bin/puma -C /opt/proxy-c/config.rb
 
 Restart=always
-PrivateTmp=true
-TimeoutStopSec=60sc
-TimeoutStartSec=2s
-StartLimitInterval=120s
-StartLimitBurst=5
+
 
 [Install]
 WantedBy=multi-user.target
