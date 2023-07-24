@@ -1,0 +1,22 @@
+[Unit]
+Description=Proxy-c service
+After=network.target
+
+[Service]
+User=root
+Group=root
+
+Type=simple
+PIDFile=/var/proxy-c/pids/proxy-c.pid
+WorkingDirectory=/opt/proxy-c
+ExecStart=puma -C config.rb
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
